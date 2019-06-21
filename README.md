@@ -29,7 +29,7 @@ This is the part of the implementation of "ICface: Interpretable and Controllabl
 6. The resuting video will be found in *'/test_code_released'* under the name *'movie.mp4'*
 
 **If you are not using *voxceleb* test set**
-1. Use *'image_crop.py'* to generate new cropped images of faces from a source image or group of images. E.g. `./image_crop.py image1.jpg image2.jpg`
+1. Use *'image_crop.py'* to extract faces from a source image or group of images. E.g. `./image_crop.py image1.jpg image2.jpg`
 2. All faces in the source image(s) will be cropped and stored in the *'./new_crop'* folder. Then follow the above steps to create your video file.
 
 -**_If you are using this implementation for your research work then please cite us as:_**
