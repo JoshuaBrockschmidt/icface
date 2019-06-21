@@ -11,6 +11,7 @@ import numpy as np
 import os
 from PIL import Image
 #import pdb
+import re
 from sys import stderr
 
 def crop_face(img, size=256):
@@ -61,6 +62,29 @@ def crop_face(img, size=256):
 
         return cropped_faces
 
+def get_next_save_path(path):
+    """
+    Returns the next viable save path within a directory.
+    For instance, if the files "1.png" and "2.png" are present,
+    it will return "3.png".
+
+    Args:
+        path: Directory to save within.
+    Returns:
+        Next viable save path.
+    """
+    files = os.listdir(path)
+    largest = 0
+    for f in files:
+        # Only look at PNG files with numbered names.
+        if re.search(r'[0-9]+\.png$', f):
+            num = int(os.path.splitext(f)[0])
+            if num > largest:
+                largest = num
+    save_path = os.path.abspath('{}/{}.png'.format(path, largest + 1))
+    print(save_path)
+    return save_path
+
 def main(path):
     if not os.path.exists(path):
         print('File "{}" does not exist'.format(path), file=stderr)
@@ -80,8 +104,7 @@ def main(path):
         print('Failed to find a face in "{}"'.format(path), file=stderr)
 
     for face in faces:
-        c = 1240  # Temporary
-        save_path = './new_crop/' + str(c) + '.png'
+        save_path = get_next_save_path('./new_crop')
         f_im = Image.fromarray(face)
         f_im.save(save_path)
 
