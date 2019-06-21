@@ -73,19 +73,26 @@ def get_next_save_path(path):
     save_path = os.path.abspath('{}/{}.png'.format(path, largest + 1))
     return save_path
 
-def main(path):
+def process_image(path):
+    """Find all faces in an image, crops them, and saves them in new_crop.
+
+    Args:
+        path: Path to image to process.
+    Return:
+        True on success, False on failure.
+    """
     if not os.path.exists(path):
         print('File "{}" does not exist'.format(path), file=stderr)
-        exit(1)
+        return False
     if not os.path.isfile(path):
         print('File "{}" is not a file'.format(path), file=stderr)
-        exit(1)
+        return False
 
     # Attempt to read image.
     img = cv2.imread(path, cv2.IMREAD_COLOR)
     if img is None:
         print('Failed to read "{}"'.format(path), file=stderr)
-        exit(1)
+        return False
 
     faces = crop_face(img)
     if faces is None:
@@ -95,12 +102,18 @@ def main(path):
         save_path = get_next_save_path('./new_crop')
         cv2.imwrite(save_path, face)
 
+    return True
+
+def main(paths):
+    for path in paths:
+        process_image(path)
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
         description='Crops an image around the face')
-    parser.add_argument('path', metavar='image',
-                        type=str, nargs=1,
+    parser.add_argument('paths', metavar='image',
+                        type=str, nargs='+',
                         help='Path to image')
     args = parser.parse_args()
 
-    main(args.path[0])
+    main(args.paths)
