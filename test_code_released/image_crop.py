@@ -12,16 +12,20 @@ import re
 from sys import stderr
 
 def crop_face(img, size=256, zoomout=1.6):
-    """Crops all faces in an image.
+    """
+
+    Crops all faces in an image.
 
     Args:
         img: Image to crop, as an numpy.ndarray.
         size: Width and height to scale resulting crop to.
         zoomout: Zoomout factor.  Scales width and height of region
             around a face.
+
     Returns:
         A list of 256x256 cropped face images as a numpy.ndarray
         if at least one face is found.  None if no faces are found.
+
     """
     detector = dlib.get_frontal_face_detector()
 
@@ -53,14 +57,17 @@ def crop_face(img, size=256, zoomout=1.6):
 
 def get_next_save_path(path):
     """
+
     Returns the next viable save path within a directory.
     For instance, if the files "1.png" and "2.png" are present,
     it will return "3.png".
 
     Args:
         path: Directory to save within.
+
     Returns:
         Next viable save path.
+
     """
     files = os.listdir(path)
     largest = 0
@@ -74,12 +81,16 @@ def get_next_save_path(path):
     return save_path
 
 def process_image(path):
-    """Find all faces in an image, crops them, and saves them in new_crop.
+    """
+
+    Find all faces in an image, crops them, and saves them in new_crop.
 
     Args:
         path: Path to image to process.
+
     Return:
         True on success, False on failure.
+
     """
     if not os.path.exists(path):
         print('File "{}" does not exist'.format(path), file=stderr)
