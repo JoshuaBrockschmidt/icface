@@ -24,11 +24,8 @@ def crop_face(img, size=256, zoomout=1.6):
         if at least one face is found.  None if no faces are found.
     """
     detector = dlib.get_frontal_face_detector()
-    resized = cv2.resize(img, (400, 400))
-    rgb = cv2.cvtColor(resized, cv2.COLOR_BGR2RGB)
-    gray = cv2.cvtColor(resized, cv2.COLOR_BGR2GRAY)
 
-    rects = detector(rgb, 1)
+    rects = detector(img, 1)
     faces = dlib.full_object_detections()
 
     if len(rects) == 0:
@@ -49,7 +46,7 @@ def crop_face(img, size=256, zoomout=1.6):
             if x < 0:
                 x = 0
 
-            face_orig = imutils.resize(rgb[y:y+h, x:x+w], height=size)  #y=10,h+60,W+40
+            face_orig = imutils.resize(img[y:y+h, x:x+w], height=size)  #y=10,h+60,W+40
             cropped_faces.append(face_orig)
 
         return cropped_faces
@@ -96,8 +93,7 @@ def main(path):
 
     for face in faces:
         save_path = get_next_save_path('./new_crop')
-        f_im = Image.fromarray(face)
-        f_im.save(save_path)
+        cv2.imwrite(save_path, face)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
