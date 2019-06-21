@@ -1,38 +1,33 @@
 #!/usr/bin/env python3
 
 import argparse
-#from imutils.face_utils import FaceAligner
 from imutils.face_utils import rect_to_bb
 import imutils
 import dlib
 import cv2
-#from imutils import face_utils
 import numpy as np
 import os
 from PIL import Image
-#import pdb
 import re
 from sys import stderr
 
-def crop_face(img, size=256):
+def crop_face(img, size=256, zoomout=1.6):
     """Crops all faces in an image.
 
     Args:
         img: Image to crop, as an numpy.ndarray.
         size: Width and height to scale resulting crop to.
+        zoomout: Zoomout factor.  Scales width and height of region
+            around a face.
     Returns:
         A list of 256x256 cropped face images as a numpy.ndarray
-        if at least one face is found.
-        None if no faces are found.
+        if at least one face is found.  None if no faces are found.
     """
     detector = dlib.get_frontal_face_detector()
+    resized = cv2.resize(img, (400, 400))
+    rgb = cv2.cvtColor(resized, cv2.COLOR_BGR2RGB)
+    gray = cv2.cvtColor(resized, cv2.COLOR_BGR2GRAY)
 
-    image= cv2.resize(img, (400, 400))
-
-    rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB) 
-    
-    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-   
     rects = detector(rgb, 1)
     faces = dlib.full_object_detections()
 
@@ -43,22 +38,19 @@ def crop_face(img, size=256):
         # Crop all detected faces.
         cropped_faces = []
         for rect in rects:
-            c1=rect.dcenter()
+            c1 = rect.dcenter()
             (x, y, w, h) = rect_to_bb(rect)
-            w=np.int(w*1.6) 
-            h=np.int(h*1.6) 
-            x=c1.x-np.int(w/2.0)
-            y=c1.y-np.int(h/2.0)
-            if y<0:
-                y=0
-            if x<0:
-                x=0
-                
+            w = np.int(w * zoomout)
+            h = np.int(h * zoomout)
+            x = c1.x - np.int(w / 2.0)
+            y = c1.y - np.int(h / 2.0)
+            if y < 0:
+                y = 0
+            if x < 0:
+                x = 0
 
-            faceOrig = imutils.resize(rgb[y:y+h, x:x+w],height=size) #y=10,h+60,W+40
-
-            d_num = np.asarray(faceOrig)
-            cropped_faces.append(d_num)
+            face_orig = imutils.resize(rgb[y:y+h, x:x+w], height=size)  #y=10,h+60,W+40
+            cropped_faces.append(face_orig)
 
         return cropped_faces
 
@@ -82,7 +74,6 @@ def get_next_save_path(path):
             if num > largest:
                 largest = num
     save_path = os.path.abspath('{}/{}.png'.format(path, largest + 1))
-    print(save_path)
     return save_path
 
 def main(path):
