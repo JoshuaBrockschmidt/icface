@@ -1,63 +1,16 @@
 #!/usr/bin/env python3
 
 import argparse
-from imutils.face_utils import rect_to_bb
-import imutils
-import dlib
 import cv2
 import numpy as np
 import os
 from PIL import Image
 import re
 from sys import stderr
-
-def crop_face(img, size=256, zoomout=1.6):
-    """
-
-    Crops all faces in an image.
-
-    Args:
-        img: BRG image as an numpy.ndarray.
-        size: Width and height to scale resulting crop to.
-        zoomout: Zoomout factor.  Scales width and height of region
-            around a face.
-
-    Returns:
-        A list of 256x256 cropped face BRG images as numpy.ndarrays
-        if at least one face is found.  None if no faces are found.
-
-    """
-    detector = dlib.get_frontal_face_detector()
-
-    rects = detector(img, 1)
-    faces = dlib.full_object_detections()
-
-    if len(rects) == 0:
-        # No faces were detected.
-        return None
-    else:
-        # Crop all detected faces.
-        cropped_faces = []
-        for rect in rects:
-            c1 = rect.dcenter()
-            (x, y, w, h) = rect_to_bb(rect)
-            w = np.int(w * zoomout)
-            h = np.int(h * zoomout)
-            x = c1.x - np.int(w / 2.0)
-            y = c1.y - np.int(h / 2.0)
-            if y < 0:
-                y = 0
-            if x < 0:
-                x = 0
-
-            face_orig = imutils.resize(img[y:y+h, x:x+w], height=size)  #y=10,h+60,W+40
-            cropped_faces.append(face_orig)
-
-        return cropped_faces
+from util.util import crop_face
 
 def get_next_save_path(path):
     """
-
     Returns the next viable save path within a directory.
     For instance, if the files "1.png" and "2.png" are present,
     it will return "3.png".
@@ -82,39 +35,39 @@ def get_next_save_path(path):
 
 def process_image(path):
     """
-
     Find all faces in an image, crops them, and saves them in new_crop.
 
     Args:
         path: Path to image to process.
 
     Return:
-        True on success, False on failure.
-
+        Number of faces cropped on success.  None on failure.
     """
     print('Cropping "{}"...'.format(os.path.abspath(path)))
     if not os.path.exists(path):
         print('File "{}" does not exist'.format(path), file=stderr)
-        return False
+        return None
     if not os.path.isfile(path):
         print('File "{}" is not a file'.format(path), file=stderr)
-        return False
+        return None
 
     # Attempt to read image.
     img = cv2.imread(path, cv2.IMREAD_COLOR)
     if img is None:
         print('Failed to read "{}"'.format(path), file=stderr)
-        return False
+        return None
 
     faces = crop_face(img)
     if faces is None:
         print('Failed to find a face in "{}"'.format(path), file=stderr)
 
+    num_cropped = 0
     for face in faces:
         try:
             save_path = get_next_save_path('./new_crop')
-            print('Writing to "{}"...'.format(os.path.abspath(save_path)))
+            print('Writing to "{}"...'.format(save_path))
             cv2.imwrite(save_path, face)
+            num_cropped += 1
         except KeyboardInterrupt as e:
             # Safely handle premature termination.
             # Remove unfinished file.
@@ -122,12 +75,15 @@ def process_image(path):
                 os.remove(save_path)
             raise e
 
-    return True
+    return num_cropped
 
 def main(paths):
+    total_cropped = 0
     for path in paths:
-        process_image(path)
-    print('Done')
+        cropped = process_image(path)
+        if not total_cropped is None:
+            total_cropped += cropped
+    print('{} faces cropped'.format(total_cropped))
 
 if __name__ == '__main__':
     try:
@@ -138,7 +94,6 @@ if __name__ == '__main__':
                             help='Path to image')
         args = parser.parse_args()
 
-        if not main(args.paths):
-            exit(1)
+        main(args.paths)
     except KeyboardInterrupt:
         print('Program terminated')
