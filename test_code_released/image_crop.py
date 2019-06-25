@@ -17,13 +17,13 @@ def crop_face(img, size=256, zoomout=1.6):
     Crops all faces in an image.
 
     Args:
-        img: Image to crop, as an numpy.ndarray.
+        img: BRG image as an numpy.ndarray.
         size: Width and height to scale resulting crop to.
         zoomout: Zoomout factor.  Scales width and height of region
             around a face.
 
     Returns:
-        A list of 256x256 cropped face images as a numpy.ndarray
+        A list of 256x256 cropped face BRG images as numpy.ndarrays
         if at least one face is found.  None if no faces are found.
 
     """
@@ -92,6 +92,7 @@ def process_image(path):
         True on success, False on failure.
 
     """
+    print('Cropping "{}"...'.format(os.path.abspath(path)))
     if not os.path.exists(path):
         print('File "{}" does not exist'.format(path), file=stderr)
         return False
@@ -110,21 +111,34 @@ def process_image(path):
         print('Failed to find a face in "{}"'.format(path), file=stderr)
 
     for face in faces:
-        save_path = get_next_save_path('./new_crop')
-        cv2.imwrite(save_path, face)
+        try:
+            save_path = get_next_save_path('./new_crop')
+            print('Writing to "{}"...'.format(os.path.abspath(save_path)))
+            cv2.imwrite(save_path, face)
+        except KeyboardInterrupt as e:
+            # Safely handle premature termination.
+            # Remove unfinished file.
+            if os.exists(save_path):
+                os.remove(save_path)
+            raise e
 
     return True
 
 def main(paths):
     for path in paths:
         process_image(path)
+    print('Done')
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(
-        description='Crops an image around the face')
-    parser.add_argument('paths', metavar='image',
-                        type=str, nargs='+',
-                        help='Path to image')
-    args = parser.parse_args()
+    try:
+        parser = argparse.ArgumentParser(
+            description='Crops an image around the face')
+        parser.add_argument('paths', metavar='image',
+                            type=str, nargs='+',
+                            help='Path to image')
+        args = parser.parse_args()
 
-    main(args.paths)
+        if not main(args.paths):
+            exit(1)
+    except KeyboardInterrupt:
+        print('Program terminated')
