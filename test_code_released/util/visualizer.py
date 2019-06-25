@@ -4,7 +4,7 @@ import ntpath
 import time
 from . import util
 from . import html
-from scipy.misc import imresize
+from skimage.transform import resize as imresize
 
 
 class Visualizer():
@@ -139,9 +139,9 @@ class Visualizer():
             save_path = os.path.join(image_dir, image_name)
             h, w, _ = im.shape
             if aspect_ratio > 1.0:
-                im = imresize(im, (h, int(w * aspect_ratio)), interp='bicubic')
+                im = imresize(im, (h, int(w * aspect_ratio)), 3)
             if aspect_ratio < 1.0:
-                im = imresize(im, (int(h / aspect_ratio), w), interp='bicubic')
+                im = imresize(im, (int(h / aspect_ratio), w), 3)
             util.save_image(im, save_path)
 
             ims.append(image_name)
